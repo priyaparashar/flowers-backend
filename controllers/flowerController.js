@@ -1,4 +1,7 @@
 
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+
 let flowers = [
     { id: 1, name: 'Rose', description: 'Classic flower with beautiful petals' },
     { id: 2, name: 'Sunflower', description: 'Bright and cheerful flower' },
@@ -7,7 +10,34 @@ let flowers = [
     { id: 5, name: 'Lotus', description: 'Exotic and serene flower' },
     { id: 6, name: 'Orchid', description: 'Delicate and elegant flower' },
   ];
+
+const users = [
+  { id: 1, username: 'admin', passwordHash: bcrypt.hashSync('admin', 10) },];
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+
+// Authenticate user and generate JWT token
+exports.login = (req, res, next) => {
+  const { username, password } = req.body;
+  const user = users.find(u => u.username === username);
+  if (!user) {
+    return res.status(401).json({ message: 'Authentication failed. User not found.' });
+  }
   
+  // Validate password
+  bcrypt.compare(password, user.passwordHash, (err, result) => {
+    if (err || !result) {
+      return res.status(401).json({ message: 'Authentication failed. Invalid username or password.' });
+    }
+    
+    // Password is correct, generate JWT token
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    res.json({ token });
+  });
+};
+
+
   exports.createFlower = (req, res, next) => {
     try {
       const newFlower = {
@@ -22,6 +52,28 @@ let flowers = [
     }
   };
   
+  exports.register = (req, res) => {
+    const { username, password } = req.body;
+  
+    // Check if user already exists
+    if (users.find(user => user.username === username)) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+  
+    // Hash the password
+    const saltRounds = 10;
+    bcrypt.genSalt(saltRounds, (err, salt) => {
+      if (err) throw err;
+  
+      bcrypt.hash(password, salt, (err, hash) => {
+        if (err) throw err;
+  
+        // Store the user with the hashed password
+        users.push({ id: users.length + 1, username, passwordHash: hash });
+        res.status(201).json({ message: 'User registered successfully' });
+      });
+    });
+  }
   exports.getAllFlowers = (req, res, next) => {
     console.log('entered here ');
     try {

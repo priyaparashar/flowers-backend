@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const flowerController = require('../controllers/flowerController');
+const authenticator = require('../middlewares/authenticate');
 const flowersPath = '/flowers'
-// Define routes and map to controller methods
-router.post(`${flowersPath}`, flowerController.createFlower);
-router.get(`${flowersPath}`, flowerController.getAllFlowers);
+
+// Public routes
+router.post('/login', flowerController.login);
+router.post('/register', flowerController.register);
+router.get(`${flowersPath}`,  flowerController.getAllFlowers);
 router.get(`${flowersPath}/:id`, flowerController.getFlowerById);
-router.put(`${flowersPath}/:id`, flowerController.updateFlowerById);
-router.delete(`${flowersPath}/:id`, flowerController.deleteFlowerById);
+
+// Protected routes
+router.post(`${flowersPath}`, authenticator.authenticateToken,  flowerController.createFlower);
+router.put(`${flowersPath}/:id`, authenticator.authenticateToken, flowerController.updateFlowerById);
+router.delete(`${flowersPath}/:id`,authenticator.authenticateToken, flowerController.deleteFlowerById);
 
 module.exports = router;
+
