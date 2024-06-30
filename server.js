@@ -2,9 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const flowerRoutes = require('./routes/flowerRoutes');
-
+const port = process.env.PORT
 const app = express();
-const port = 8080;
 
 // Use Morgan to log requests to the console
 app.use(morgan('combined'));
